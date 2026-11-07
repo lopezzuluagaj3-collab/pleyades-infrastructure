@@ -1,0 +1,315 @@
+name: 'Terraform Azure CI/CD - Pleyades'
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**.tf"
+      - "modules/**"
+      - ".github/workflows/**"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "**.tf"
+      - "modules/**"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+permissions:
+  id-token: write     
+  contents: read      
+  pull-requests: write 
+
+jobs:
+  # =========================================================
+  # 1. Validación de Formato (terraform fmt)
+  # =========================================================
+  validate-fmt:
+    name: '1. Terraform Format Check'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
+        with:
+          terraform_version: "1.11.0"
+          terraform_wrapper: false
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -diff -recursive
+
+  # =========================================================
+  # 2. Análisis Estático y Linter (TFLint)
+  # =========================================================
+  tflint:
+    name: '2. TFLint Analysis'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@90f302c255ef959cbfb4bd10581afecdb7ece3e6
+        with:
+          tflint_version: v0.55.0
+
+      - name: Inicializar TFLint
+        run: tflint --init
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Ejecutar TFLint
+        run: |
+          tflint -f compact --recursive | tee tflint-report.txt
+
+      - name: Subir reporte de TFLint
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: tflint-report
+          path: tflint-report.txt
+          if-no-files-found: warn
+          retention-days: 14
+
+  # =========================================================
+  # 3. Escaneo de Seguridad (Checkov SAST)
+  # =========================================================
+  security-checkov:
+    name: '3. Checkov Security Scan'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Checkov - Escaneo de seguridad
+        id: checkov
+        uses: bridgecrewio/checkov-action@45edc9d8856b664db2ec251f5f8632361f0a67aa
+        with:
+          directory: .
+          framework: terraform
+          output_format: cli,json
+          output_file_path: checkov-report.txt,checkov-report.json
+          soft_fail: true
+          download_external_modules: true
+
+      - name: Subir reporte de Checkov
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: checkov-report
+          path: |
+            checkov-report.txt
+            checkov-report.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  # =========================================================
+  # 4. Estimación de Costos (Infracost)
+  # =========================================================
+  infracost:
+    name: '4. Infracost Cost Estimation'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Setup Infracost
+        uses: infracost/actions/setup@d5dd739fb5eae81f31bf09fea5c290186a91964a
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      - name: Generar estimación de costos
+        run: |
+          infracost breakdown --path=. \
+                              --format=json \
+                              --out-file=infracost-report.json
+          infracost breakdown --path=. \
+                              --format=table \
+                              --out-file=infracost-report.txt
+
+      - name: Comentar Infracost en PR (si aplica)
+        if: github.event_name == 'pull_request'
+        run: |
+          infracost comment github --path=infracost-report.json \
+                                  --repo="$GITHUB_REPOSITORY" \
+                                  --github-token="${{ github.token }}" \
+                                  --pull-request="${{ github.event.pull_request.number }}" \
+                                  --behavior=update
+
+      - name: Subir reporte de Infracost
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: infracost-report
+          path: |
+            infracost-report.txt
+            infracost-report.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  # =========================================================
+  # 5. Plan de Terraform (Init, Validate & Plan con Azure OIDC)
+  # =========================================================
+  terraform-plan:
+    name: '5. Terraform Validate & Plan'
+    runs-on: ubuntu-latest
+    needs: [validate-fmt, tflint, security-checkov]
+
+    env:
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ARM_USE_OIDC: "true"
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Configurar credenciales de Azure (OIDC)
+        uses: azure/login@7184910d9eb2b1c5e48f7073824a90609bb9b6d6
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
+        with:
+          terraform_version: "1.11.0"
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          set -o pipefail
+          terraform plan -out=tfplan -no-color | tee plan_output.txt
+
+      - name: Guardar plan como artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: tfplan
+          path: |
+            tfplan
+            plan_output.txt
+          if-no-files-found: warn
+          retention-days: 14
+
+  # =========================================================
+  # 6. Notificación por Correo
+  # =========================================================
+  notify:
+    name: '6. Email Notification'
+    runs-on: ubuntu-latest
+    needs: [validate-fmt, tflint, security-checkov, infracost, terraform-plan]
+    if: always()
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Descargar reporte de TFLint
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        continue-on-error: true
+        with:
+          name: tflint-report
+
+      - name: Descargar reporte de Checkov
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        continue-on-error: true
+        with:
+          name: checkov-report
+
+      - name: Descargar reporte de Infracost
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        continue-on-error: true
+        with:
+          name: infracost-report
+
+      - name: Descargar reporte de Terraform Plan
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        continue-on-error: true
+        with:
+          name: tfplan
+
+      - name: Asegurar que existan los reportes antes de adjuntar
+        run: |
+          for f in plan_output.txt checkov-report.txt checkov-report.json infracost-report.txt infracost-report.json tflint-report.txt; do
+            [ -f "$f" ] || touch "$f"
+          done
+
+      - name: Enviar correo con resultados de validaciones
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@4226df7daafa6fc901a43789c49bf7ab309066e7
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "Terraform CI Report (Plan + Checkov + Infracost + TFLint) - Pléyades"
+          to: ${{ secrets.NOTIFY_EMAIL }}
+          from: "CI Pléyades <${{ secrets.SMTP_USERNAME }}>"
+          body: "Se ejecutó el pipeline de validaciones de Terraform para la plataforma Pléyades (Azure). Revisa los reportes adjuntos para ver el plan de infraestructura, postura de seguridad, linting y estimación de costos."
+          attachments: |
+            plan_output.txt
+            checkov-report.txt
+            checkov-report.json
+            infracost-report.txt
+            tflint-report.txt
+
+  # =========================================================
+  # 7. Terraform Apply (Despliegue a Producción en push a main)
+  # =========================================================
+  apply:
+    name: '7. Terraform Apply (requiere aprobación manual)'
+    needs: [terraform-plan]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production
+
+    env:
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ARM_USE_OIDC: "true"
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Configurar credenciales de Azure (OIDC)
+        uses: azure/login@7184910d9eb2b1c5e48f7073824a90609bb9b6d6
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
+        with:
+          terraform_version: "1.11.0"
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Descargar plan guardado
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: tfplan
+
+      - name: Terraform Apply
+        run: terraform apply tfplan
