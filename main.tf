@@ -19,7 +19,7 @@ provider "azurerm" {
 }
 
 # ---------------------------------------------------------
-# Resource Group Module
+# 1. Resource Group Module
 # ---------------------------------------------------------
 module "resource_group" {
   source      = "./modules/resource_group"
@@ -27,4 +27,19 @@ module "resource_group" {
   location    = var.location
   environment = local.environment
   tags        = merge(local.default_tags, var.tags)
+}
+
+# ---------------------------------------------------------
+# 2. Networking Module (VNet & Subnet)
+# ---------------------------------------------------------
+module "networking" {
+  source              = "./modules/networking"
+  resource_group_name = module.resource_group.name
+  location            = module.resource_group.location
+  vnet_name           = "vnet-${local.project_name}-${local.environment}"
+  address_space       = var.vnet_address_space
+  aks_subnet_name     = "snet-aks-${local.environment}"
+  aks_subnet_prefixes = var.aks_subnet_prefixes
+  environment         = local.environment
+  tags                = merge(local.default_tags, var.tags)
 }
