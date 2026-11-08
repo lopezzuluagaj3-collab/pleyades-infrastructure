@@ -46,7 +46,7 @@ variable "aks_dns_prefix" {
 variable "aks_node_vm_size" {
   description = "VM SKU for AKS worker nodes."
   type        = string
-  default     = "Standard_B2ms"
+  default     = "Standard_D2s_v5"
 }
 
 variable "aks_node_count" {

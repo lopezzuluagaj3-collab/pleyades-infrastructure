@@ -36,7 +36,7 @@ variable "kubernetes_version" {
 variable "node_vm_size" {
   description = "The SKU which should be used for the Virtual Machines in the default node pool."
   type        = string
-  default     = "Standard_B2ms"
+  default     = "Standard_D2s_v5"
 }
 
 variable "node_count" {
