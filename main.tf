@@ -43,3 +43,21 @@ module "networking" {
   environment         = local.environment
   tags                = merge(local.default_tags, var.tags)
 }
+
+# ---------------------------------------------------------
+# 3. AKS Managed Cluster Module (Cilium eBPF & Workload Identity)
+# ---------------------------------------------------------
+module "aks" {
+  source              = "./modules/aks"
+  cluster_name        = var.aks_cluster_name
+  resource_group_name = module.resource_group.name
+  location            = module.resource_group.location
+  dns_prefix          = var.aks_dns_prefix
+  vnet_subnet_id      = module.networking.aks_subnet_id
+  node_vm_size        = var.aks_node_vm_size
+  node_count          = var.aks_node_count
+  min_count           = var.aks_min_count
+  max_count           = var.aks_max_count
+  environment         = local.environment
+  tags                = merge(local.default_tags, var.tags)
+}

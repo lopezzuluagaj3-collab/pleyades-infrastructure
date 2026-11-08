@@ -31,6 +31,42 @@ variable "aks_subnet_prefixes" {
   default     = ["10.0.1.0/24"]
 }
 
+variable "aks_cluster_name" {
+  description = "Name of the AKS Managed Cluster."
+  type        = string
+  default     = "aks-pleyades-dev"
+}
+
+variable "aks_dns_prefix" {
+  description = "DNS prefix for the AKS API Server."
+  type        = string
+  default     = "pleyades-aks-dev"
+}
+
+variable "aks_node_vm_size" {
+  description = "VM SKU for AKS worker nodes."
+  type        = string
+  default     = "Standard_B2ms"
+}
+
+variable "aks_node_count" {
+  description = "Initial number of nodes in the default node pool."
+  type        = number
+  default     = 2
+}
+
+variable "aks_min_count" {
+  description = "Minimum number of nodes for autoscaling."
+  type        = number
+  default     = 1
+}
+
+variable "aks_max_count" {
+  description = "Maximum number of nodes for autoscaling."
+  type        = number
+  default     = 3
+}
+
 variable "tags" {
   description = "Additional tags for platform resources."
   type        = map(string)
