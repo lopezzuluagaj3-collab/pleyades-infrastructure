@@ -58,6 +58,9 @@ module "aks" {
   node_count          = var.aks_node_count
   min_count           = var.aks_min_count
   max_count           = var.aks_max_count
+  service_cidr        = var.aks_service_cidr
+  dns_service_ip      = var.aks_dns_service_ip
+  pod_cidr            = var.aks_pod_cidr
   environment         = local.environment
   tags                = merge(local.default_tags, var.tags)
 }

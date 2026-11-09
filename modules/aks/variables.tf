@@ -33,6 +33,24 @@ variable "kubernetes_version" {
   default     = null
 }
 
+variable "service_cidr" {
+  description = "The Network Range used by the Kubernetes service."
+  type        = string
+  default     = "172.16.0.0/16"
+}
+
+variable "dns_service_ip" {
+  description = "IP address within the Kubernetes service address range that will be used by cluster service discovery (kube-dns)."
+  type        = string
+  default     = "172.16.0.10"
+}
+
+variable "pod_cidr" {
+  description = "The CIDR to use for pod IP addresses when network plugin mode is overlay."
+  type        = string
+  default     = "10.244.0.0/16"
+}
+
 variable "node_vm_size" {
   description = "The SKU which should be used for the Virtual Machines in the default node pool."
   type        = string
