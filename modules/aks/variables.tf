@@ -36,13 +36,13 @@ variable "kubernetes_version" {
 variable "node_vm_size" {
   description = "The SKU which should be used for the Virtual Machines in the default node pool."
   type        = string
-  default     = "Standard_D2s_v5"
+  default     = "Standard_D2s_v7"
 }
 
 variable "node_count" {
   description = "The initial number of nodes in the default node pool."
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "min_count" {
@@ -54,7 +54,7 @@ variable "min_count" {
 variable "max_count" {
   description = "The maximum number of nodes for auto-scaling."
   type        = number
-  default     = 3
+  default     = 2
 }
 
 variable "enable_auto_scaling" {

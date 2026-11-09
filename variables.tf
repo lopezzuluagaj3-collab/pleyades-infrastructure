@@ -46,13 +46,13 @@ variable "aks_dns_prefix" {
 variable "aks_node_vm_size" {
   description = "VM SKU for AKS worker nodes."
   type        = string
-  default     = "Standard_D2s_v5"
+  default     = "Standard_D2s_v7"
 }
 
 variable "aks_node_count" {
   description = "Initial number of nodes in the default node pool."
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "aks_min_count" {
@@ -64,7 +64,7 @@ variable "aks_min_count" {
 variable "aks_max_count" {
   description = "Maximum number of nodes for autoscaling."
   type        = number
-  default     = 3
+  default     = 2
 }
 
 variable "tags" {
