@@ -32,6 +32,9 @@ resource "azurerm_kubernetes_cluster" "this" {
     network_plugin_mode = "overlay"
     network_data_plane  = "cilium"
     network_policy      = "cilium"
+    service_cidr        = var.service_cidr
+    dns_service_ip      = var.dns_service_ip
+    pod_cidr            = var.pod_cidr
   }
 
   tags = local.tags
