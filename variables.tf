@@ -85,6 +85,24 @@ variable "aks_pod_cidr" {
   default     = "10.244.0.0/16"
 }
 
+variable "argocd_namespace" {
+  description = "Namespace for the ArgoCD installation."
+  type        = string
+  default     = "argocd"
+}
+
+variable "argocd_chart_version" {
+  description = "Helm chart version for ArgoCD."
+  type        = string
+  default     = "7.7.16"
+}
+
+variable "argocd_server_service_type" {
+  description = "Kubernetes Service type for the ArgoCD Web Server (ClusterIP, LoadBalancer, NodePort)."
+  type        = string
+  default     = "ClusterIP"
+}
+
 variable "tags" {
   description = "Additional tags for platform resources."
   type        = map(string)

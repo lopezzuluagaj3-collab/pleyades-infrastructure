@@ -5,6 +5,10 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 3.117.0"
     }
+    helm = {
+      source  = "hashicorp/helm"
+      version = "~> 2.16.0"
+    }
   }
   backend "azurerm" {
     resource_group_name  = "rg-pleyades-tfstate"
@@ -16,6 +20,15 @@ terraform {
 
 provider "azurerm" {
   features {}
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = module.aks.host
+    client_certificate     = base64decode(module.aks.client_certificate)
+    client_key             = base64decode(module.aks.client_key)
+    cluster_ca_certificate = base64decode(module.aks.cluster_ca_certificate)
+  }
 }
 
 # ---------------------------------------------------------
@@ -63,4 +76,18 @@ module "aks" {
   pod_cidr            = var.aks_pod_cidr
   environment         = local.environment
   tags                = merge(local.default_tags, var.tags)
+}
+
+# ---------------------------------------------------------
+# 4. ArgoCD Bootstrap Module (GitOps Engine)
+# ---------------------------------------------------------
+module "argocd" {
+  source              = "./modules/argocd"
+  namespace           = var.argocd_namespace
+  chart_version       = var.argocd_chart_version
+  server_service_type = var.argocd_server_service_type
+  environment         = local.environment
+  tags                = merge(local.default_tags, var.tags)
+
+  depends_on = [module.aks]
 }

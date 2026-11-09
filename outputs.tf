@@ -74,3 +74,24 @@ output "aks_identity_principal_id" {
   description = "The Principal ID of the AKS System-Assigned Identity."
   value       = module.aks.identity_principal_id
 }
+
+# ArgoCD Outputs
+output "argocd_namespace" {
+  description = "The namespace where ArgoCD is installed."
+  value       = module.argocd.namespace
+}
+
+output "argocd_release_name" {
+  description = "The Helm release name of ArgoCD."
+  value       = module.argocd.release_name
+}
+
+output "argocd_chart_version" {
+  description = "The deployed Helm chart version of ArgoCD."
+  value       = module.argocd.chart_version
+}
+
+output "argocd_status" {
+  description = "The status of the ArgoCD Helm release."
+  value       = module.argocd.status
+}
