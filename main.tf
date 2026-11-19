@@ -104,15 +104,11 @@ module "postgres" {
   source              = "./modules/postgres"
   server_name         = var.postgres_server_name
   resource_group_name = module.resource_group.name
-  location            = module.resource_group.location
+  location            = var.postgres_location
   environment         = local.environment
   postgres_version    = var.postgres_version
-  delegated_subnet_id = module.networking.postgres_subnet_id
-  private_dns_zone_id = module.networking.postgres_private_dns_zone_id
   sku_name            = var.postgres_sku_name
   storage_mb          = var.postgres_storage_mb
   administrator_login = var.postgres_admin_username
   tags                = merge(local.default_tags, var.tags)
-
-  depends_on = [module.networking]
 }
