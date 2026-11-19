@@ -108,3 +108,42 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+# ---------------------------------------------------------
+# PostgreSQL Flexible Server (ADBFP Base Pool)
+# ---------------------------------------------------------
+variable "postgres_subnet_prefixes" {
+  description = "The address prefixes for the delegated PostgreSQL Flexible Server Subnet."
+  type        = list(string)
+  default     = ["10.0.2.0/24"]
+}
+
+variable "postgres_server_name" {
+  description = "Name of the base Azure Database for PostgreSQL Flexible Server."
+  type        = string
+  default     = "psql-pleyades-dev-01"
+}
+
+variable "postgres_sku_name" {
+  description = "SKU for PostgreSQL Flexible Server."
+  type        = string
+  default     = "B_Standard_B1ms"
+}
+
+variable "postgres_storage_mb" {
+  description = "Storage capacity in megabytes for PostgreSQL Flexible Server."
+  type        = number
+  default     = 32768
+}
+
+variable "postgres_version" {
+  description = "PostgreSQL engine version."
+  type        = string
+  default     = "16"
+}
+
+variable "postgres_admin_username" {
+  description = "Administrator username for PostgreSQL Flexible Server."
+  type        = string
+  default     = "pleyades_admin"
+}

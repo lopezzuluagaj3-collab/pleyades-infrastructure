@@ -9,6 +9,10 @@ terraform {
       source  = "hashicorp/helm"
       version = "~> 2.16.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.6.0"
+    }
   }
   backend "azurerm" {
     resource_group_name  = "rg-pleyades-tfstate"
@@ -46,15 +50,16 @@ module "resource_group" {
 # 2. Networking Module (VNet & Subnet)
 # ---------------------------------------------------------
 module "networking" {
-  source              = "./modules/networking"
-  resource_group_name = module.resource_group.name
-  location            = module.resource_group.location
-  vnet_name           = "vnet-${local.project_name}-${local.environment}"
-  address_space       = var.vnet_address_space
-  aks_subnet_name     = "snet-aks-${local.environment}"
-  aks_subnet_prefixes = var.aks_subnet_prefixes
-  environment         = local.environment
-  tags                = merge(local.default_tags, var.tags)
+  source                   = "./modules/networking"
+  resource_group_name      = module.resource_group.name
+  location                 = module.resource_group.location
+  vnet_name                = "vnet-${local.project_name}-${local.environment}"
+  address_space            = var.vnet_address_space
+  aks_subnet_name          = "snet-aks-${local.environment}"
+  aks_subnet_prefixes      = var.aks_subnet_prefixes
+  postgres_subnet_prefixes = var.postgres_subnet_prefixes
+  environment              = local.environment
+  tags                     = merge(local.default_tags, var.tags)
 }
 
 # ---------------------------------------------------------
@@ -90,4 +95,24 @@ module "argocd" {
   tags                = merge(local.default_tags, var.tags)
 
   depends_on = [module.aks]
+}
+
+# ---------------------------------------------------------
+# 5. PostgreSQL Flexible Server Module (ADBFP Base Pool)
+# ---------------------------------------------------------
+module "postgres" {
+  source              = "./modules/postgres"
+  server_name         = var.postgres_server_name
+  resource_group_name = module.resource_group.name
+  location            = module.resource_group.location
+  environment         = local.environment
+  postgres_version    = var.postgres_version
+  delegated_subnet_id = module.networking.postgres_subnet_id
+  private_dns_zone_id = module.networking.postgres_private_dns_zone_id
+  sku_name            = var.postgres_sku_name
+  storage_mb          = var.postgres_storage_mb
+  administrator_login = var.postgres_admin_username
+  tags                = merge(local.default_tags, var.tags)
+
+  depends_on = [module.networking]
 }

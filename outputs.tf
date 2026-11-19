@@ -95,3 +95,35 @@ output "argocd_status" {
   description = "The status of the ArgoCD Helm release."
   value       = module.argocd.status
 }
+
+# PostgreSQL Flexible Server Outputs
+output "postgres_server_id" {
+  description = "The ID of the base PostgreSQL Flexible Server."
+  value       = module.postgres.server_id
+}
+
+output "postgres_server_name" {
+  description = "The name of the base PostgreSQL Flexible Server."
+  value       = module.postgres.server_name
+}
+
+output "postgres_fqdn" {
+  description = "The fully qualified domain name (FQDN) of the base PostgreSQL Flexible Server."
+  value       = module.postgres.fqdn
+}
+
+output "postgres_administrator_login" {
+  description = "The master administrator username for the base PostgreSQL Flexible Server."
+  value       = module.postgres.administrator_login
+}
+
+output "postgres_administrator_password" {
+  description = "The generated administrator password for the base PostgreSQL Flexible Server."
+  value       = module.postgres.administrator_password
+  sensitive   = true
+}
+
+output "postgres_database_name" {
+  description = "The name of the initial root database."
+  value       = module.postgres.database_name
+}
