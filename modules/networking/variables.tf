@@ -34,6 +34,18 @@ variable "aks_subnet_prefixes" {
   default     = ["10.0.1.0/24"]
 }
 
+variable "postgres_subnet_name" {
+  description = "The name of the Subnet dedicated for PostgreSQL Flexible Server."
+  type        = string
+  default     = "snet-postgres-dev"
+}
+
+variable "postgres_subnet_prefixes" {
+  description = "The address prefixes for the PostgreSQL Subnet."
+  type        = list(string)
+  default     = ["10.0.2.0/24"]
+}
+
 variable "environment" {
   description = "Environment tier (dev, staging, prod)."
   type        = string
