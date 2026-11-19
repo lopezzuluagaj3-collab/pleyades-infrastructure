@@ -42,3 +42,10 @@ resource "azurerm_postgresql_flexible_server_configuration" "require_secure_tran
   server_id = azurerm_postgresql_flexible_server.this.id
   value     = "on"
 }
+
+resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_azure_services" {
+  name             = "allow-azure-internal"
+  server_id        = azurerm_postgresql_flexible_server.this.id
+  start_ip_address = "0.0.0.0"
+  end_ip_address   = "0.0.0.0"
+}
