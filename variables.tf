@@ -112,6 +112,12 @@ variable "tags" {
 # ---------------------------------------------------------
 # PostgreSQL Flexible Server (ADBFP Base Pool)
 # ---------------------------------------------------------
+variable "postgres_location" {
+  description = "The Azure region for the base PostgreSQL Flexible Server (unrestricted region)."
+  type        = string
+  default     = "centralus"
+}
+
 variable "postgres_subnet_prefixes" {
   description = "The address prefixes for the delegated PostgreSQL Flexible Server Subnet."
   type        = list(string)
