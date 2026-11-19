@@ -9,6 +9,7 @@ variable "resource_group_name" {
 variable "location" {
   description = "The Azure region for the PostgreSQL Flexible Server."
   type        = string
+  default     = "centralus"
 }
 
 variable "server_name" {
@@ -29,13 +30,15 @@ variable "postgres_version" {
 }
 
 variable "delegated_subnet_id" {
-  description = "The resource ID of the delegated subnet for PostgreSQL Flexible Server."
+  description = "The resource ID of the delegated subnet for PostgreSQL Flexible Server (optional)."
   type        = string
+  default     = null
 }
 
 variable "private_dns_zone_id" {
-  description = "The resource ID of the Private DNS Zone for PostgreSQL Flexible Server."
+  description = "The resource ID of the Private DNS Zone for PostgreSQL Flexible Server (optional)."
   type        = string
+  default     = null
 }
 
 variable "sku_name" {
